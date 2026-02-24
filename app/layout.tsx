@@ -4,6 +4,9 @@ import "../styles/globals.css";
 export const metadata: Metadata = {
   title: "Dovepeak | Secure M-Pesa Payment Portal",
   description: "Official payment portal for Dovepeak Digital Solutions. Secure and fast M-Pesa STK Push payments.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

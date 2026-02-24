@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     let mpesaReceipt = '';
 
     if (resultCodeCode === 0) {
-      status = 'success';
+      status = 'completed'; // Using 'completed' for consistency with frontend polling
       const items = result.CallbackMetadata.Item;
       const receiptItem = items.find((item: { Name: string; Value: any }) => item.Name === 'MpesaReceiptNumber');
       mpesaReceipt = receiptItem ? receiptItem.Value : '';

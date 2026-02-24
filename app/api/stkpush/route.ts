@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isValidPhone(phone)) {
+      console.log('Payment Request - Invalid phone:', { phone, amount });
       return NextResponse.json({ message: 'Invalid phone format' }, { status: 400 });
     }
 
@@ -22,34 +23,52 @@ export async function POST(req: NextRequest) {
     // 3. Send STK Push
     const stkResponse = await sendStkPush(phone, amount, reference);
 
+    console.log('STK Push Response:', stkResponse);
+
     if (stkResponse.ResponseCode !== '0') {
-      return NextResponse.json({ message: stkResponse.CustomerMessage || 'Failed to initiate STK Push' }, { status: 400 });
+      const errorMessage = stkResponse.errorMessage || stkResponse.CustomerMessage || 'Failed to initiate STK Push';
+      console.error('STK Push Error:', errorMessage);
+      return NextResponse.json({ message: errorMessage, details: stkResponse }, { status: 400 });
     }
 
     // 4. Save to Supabase
-    const { error: dbError } = await supabase
-      .from('payments')
-      .insert({
-        phone,
-        amount,
-        reference,
-        status: 'pending',
-        mpesa_receipt: null,
-        checkout_request_id: stkResponse.CheckoutRequestID,
-      });
+    console.log('Saving to Supabase:', {
+      phone,
+      amount,
+      reference,
+      checkoutRequestId: stkResponse.CheckoutRequestID
+    });
+    
+    if (!supabase) {
+      console.error('Supabase client is null!');
+    } else {
+      const { error: dbError } = await supabase
+        .from('payments')
+        .insert({
+          phone,
+          amount,
+          reference,
+          status: 'pending',
+          mpesa_receipt: null,
+          checkout_request_id: stkResponse.CheckoutRequestID,
+        });
 
-    if (dbError) {
-      console.error('Supabase Error:', dbError);
-      // We still return success to the user since the STK push was sent
+      if (dbError) {
+        console.error('Supabase Insert Error:', dbError);
+      } else {
+        console.log('Payment saved to Supabase successfully');
+      }
     }
 
     return NextResponse.json({ 
       message: 'STK Push initiated successfully',
-      reference 
+      reference,
+      checkoutRequestId: stkResponse.CheckoutRequestID
     });
 
   } catch (error: any) {
     console.error('STK Push API Error:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    const errorMessage = error.message || 'Internal Server Error';
+    return NextResponse.json({ message: errorMessage, details: error.toString() }, { status: 500 });
   }
 }

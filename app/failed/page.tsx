@@ -11,7 +11,7 @@ export default function FailedPage() {
           </svg>
         </div>
         
-        <h1 className="text-2xl font-bold text-[#0B1E3F] mb-3">Payment Failed</h1>
+        <h1 className="text-2xl font-bold text-[#27187D] mb-3">Payment Failed</h1>
         <p className="text-gray-600 mb-8 leading-relaxed">
           We couldn't process your payment. This could be due to insufficient funds, a cancelled request, or a technical issue.
         </p>
@@ -19,13 +19,13 @@ export default function FailedPage() {
         <div className="space-y-4">
           <Link 
             href="/"
-            className="inline-block w-full bg-[#0B1E3F] text-white font-semibold py-4 rounded-xl hover:bg-[#162d5a] transition-colors shadow-lg"
+            className="inline-block w-full bg-[#27187D] text-white font-semibold py-4 rounded-xl hover:bg-[#472CE3] transition-colors shadow-lg"
           >
             Retry Payment
           </Link>
           <Link 
             href="/"
-            className="inline-block w-full border-2 border-[#0B1E3F] text-[#0B1E3F] font-semibold py-4 rounded-xl hover:bg-gray-50 transition-colors"
+            className="inline-block w-full border-2 border-[#27187D] text-[#27187D] font-semibold py-4 rounded-xl hover:bg-gray-50 transition-colors"
           >
             Cancel
           </Link>
