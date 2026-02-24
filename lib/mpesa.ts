@@ -78,6 +78,8 @@ export async function sendStkPush(phone: string, amount: number, reference: stri
     TransactionDesc: `Payment for ${reference}`,
   };
 
+  console.log('STK Push Request:', JSON.stringify(body, null, 2));
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {

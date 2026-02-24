@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -9,7 +9,7 @@ interface PaymentDetails {
   amount?: string;
 }
 
-export default function SuccessPage() {
+function SuccessPageContent() {
   const searchParams = useSearchParams();
   const [animate, setAnimate] = useState(false);
   
@@ -117,5 +117,23 @@ export default function SuccessPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gradient-to-br from-[#27187D] via-[#472CE3] to-[#6B4EE6] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center">
+          <div className="animate-pulse">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 rounded-full"></div>
+            <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto"></div>
+          </div>
+        </div>
+      </main>
+    }>
+      <SuccessPageContent />
+    </Suspense>
   );
 }
