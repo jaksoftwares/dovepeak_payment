@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from './Button';
 import { formatPhone, isValidPhone } from '@/lib/utils';
 
 type PaymentState = 'idle' | 'sending' | 'waiting' | 'success' | 'failed';
+
+// Maximum time to wait for payment (in milliseconds)
+const PAYMENT_TIMEOUT = 120000; // 2 minutes
+const POLLING_INTERVAL = 3000; // 3 seconds
 
 export default function PaymentForm() {
   const [phone, setPhone] = useState('');
@@ -17,6 +21,8 @@ export default function PaymentForm() {
   const [statusMessage, setStatusMessage] = useState('');
   const router = useRouter();
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [waitingTime, setWaitingTime] = useState(0);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -24,8 +30,18 @@ export default function PaymentForm() {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
+
+  // Handle successful payment redirect - useEffect to avoid setState during render
+  useEffect(() => {
+    if (state === 'success' && reference && amount) {
+      router.push(`/success?ref=${reference}&amount=${amount}`);
+    }
+  }, [state, reference, amount, router]);
 
   const checkPaymentStatus = async (checkoutId: string) => {
     try {
@@ -34,17 +50,11 @@ export default function PaymentForm() {
 
       if (data.status === 'completed') {
         // Payment completed successfully
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-          pollingRef.current = null;
-        }
+        stopPolling();
         setState('success');
       } else if (data.status === 'failed') {
         // Payment failed
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-          pollingRef.current = null;
-        }
+        stopPolling();
         setError('Payment was declined. Please try again.');
         setState('failed');
       }
@@ -53,6 +63,44 @@ export default function PaymentForm() {
       console.error('Error checking payment status:', err);
     }
   };
+
+  const startPolling = useCallback((checkoutId: string) => {
+    // Start the polling interval
+    pollingRef.current = setInterval(() => {
+      checkPaymentStatus(checkoutId);
+    }, POLLING_INTERVAL);
+
+    // Start the timeout timer
+    const startTime = Date.now();
+    const updateWaitingTime = () => {
+      if (pollingRef.current) {
+        setWaitingTime(Math.floor((Date.now() - startTime) / 1000));
+        
+        // Check if we've exceeded the timeout
+        if (Date.now() - startTime >= PAYMENT_TIMEOUT) {
+          stopPolling();
+          setError('Payment request timed out. Please try again.');
+          setState('failed');
+        } else {
+          // Continue updating the waiting time
+          timeoutRef.current = setTimeout(updateWaitingTime, 1000);
+        }
+      }
+    };
+    
+    timeoutRef.current = setTimeout(updateWaitingTime, 1000);
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,14 +135,13 @@ export default function PaymentForm() {
         // STK push sent successfully
         setReference(data.reference);
         setCheckoutRequestId(data.checkoutRequestId);
+        setWaitingTime(0);
         setState('waiting');
         setStatusMessage('Waiting for payment confirmation...');
         
         // Start polling for payment status
         if (data.checkoutRequestId) {
-          pollingRef.current = setInterval(() => {
-            checkPaymentStatus(data.checkoutRequestId);
-          }, 3000); // Check every 3 seconds
+          startPolling(data.checkoutRequestId);
         }
       } else {
         setError(data.message || 'Something went wrong. Please try again.');
@@ -107,6 +154,7 @@ export default function PaymentForm() {
   };
 
   const resetForm = () => {
+    stopPolling();
     setState('idle');
     setPhone('');
     setAmount('');
@@ -114,10 +162,7 @@ export default function PaymentForm() {
     setCheckoutRequestId('');
     setError('');
     setStatusMessage('');
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
+    setWaitingTime(0);
   };
 
   // Loading/Sending State
@@ -136,6 +181,9 @@ export default function PaymentForm() {
 
   // Waiting for Payment State
   if (state === 'waiting') {
+    const remainingTime = Math.max(0, Math.ceil((PAYMENT_TIMEOUT / 1000 - waitingTime) / 60));
+    const progress = Math.min(100, (waitingTime / (PAYMENT_TIMEOUT / 1000)) * 100);
+    
     return (
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center">
         <WaitingLoader />
@@ -148,6 +196,21 @@ export default function PaymentForm() {
             📱 Enter your M-Pesa PIN on your phone to complete payment
           </p>
         </div>
+        
+        {/* Waiting Timer */}
+        <div className="mt-6 space-y-2">
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Waiting: {waitingTime}s</span>
+            <span>Timeout: {remainingTime} min</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+        
         <div className="mt-4 text-xs text-gray-400">
           <p>Reference: {reference}</p>
         </div>
@@ -162,10 +225,15 @@ export default function PaymentForm() {
     );
   }
 
-  // Success State - will redirect to success page
+  // Success State - will redirect to success page (via useEffect)
   if (state === 'success') {
-    router.push(`/success?ref=${reference}&amount=${amount}`);
-    return null;
+    return (
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center">
+        <SendingLoader />
+        <h2 className="text-xl font-bold text-green-600 mt-6">Payment Successful!</h2>
+        <p className="text-gray-600 mt-2">Redirecting to confirmation page...</p>
+      </div>
+    );
   }
 
   // Failed State
