@@ -17,7 +17,10 @@ console.log('M-Pesa Config:', {
   PASSKEY: PASSKEY ? 'set' : 'missing',
   CALLBACK_URL,
   PARTY_B,
+  TRANSACTION_TYPE: process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline'
 });
+
+const TRANSACTION_TYPE = process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline';
 
 export async function getAccessToken() {
   if (!CONSUMER_KEY || !CONSUMER_SECRET) {
@@ -68,15 +71,20 @@ export async function sendStkPush(phone: string, amount: number, reference: stri
     BusinessShortCode: SHORTCODE,
     Password: password,
     Timestamp: timestamp,
-    TransactionType: 'CustomerPayBillOnline',
+    TransactionType: TRANSACTION_TYPE,
     Amount: amount,
     PartyA: phone,
-    PartyB: PARTY_B || SHORTCODE,
+    PartyB: PARTY_B || SHORTCODE, // Usually identical to SHORTCODE
     PhoneNumber: phone,
     CallBackURL: CALLBACK_URL,
     AccountReference: reference,
     TransactionDesc: `Payment for ${reference}`,
   };
+
+  // Log crucial warning for production debugging
+  if (PARTY_B && PARTY_B !== SHORTCODE) {
+    console.warn(`M-Pesa Warning: PartyB (${PARTY_B}) differs from ShortCode (${SHORTCODE}). This often causes failures in production.`);
+  }
 
   console.log('STK Push Request:', JSON.stringify(body, null, 2));
 

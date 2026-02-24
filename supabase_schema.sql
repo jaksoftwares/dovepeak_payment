@@ -17,5 +17,8 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 -- Create policy to allow public inserts (for the STK push)
 CREATE POLICY "Allow public insert" ON payments FOR INSERT WITH CHECK (true);
 
+-- Create policy to allow public reads (for checking payment status)
+CREATE POLICY "Allow public read" ON payments FOR SELECT USING (true);
+
 -- Create policy to allow service role/backend to update
 CREATE POLICY "Allow backend update" ON payments FOR UPDATE USING (true);

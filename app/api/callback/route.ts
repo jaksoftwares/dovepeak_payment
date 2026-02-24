@@ -8,24 +8,25 @@ export async function POST(req: NextRequest) {
 
     const result = body.Body.stkCallback;
     const resultCodeCode = result.ResultCode;
+    const resultDesc = result.ResultDesc;
     const checkoutRequestID = result.CheckoutRequestID;
 
-    // Find the record. Safaricom doesn't send our 'reference' back in the top level.
-    // Usually we'd map MerchantRequestID or CheckoutRequestID.
-    // For this MVP, let's assume we store one of these IDs in the DB or use a simpler mapping.
-    // Let's check how to get our reference back. Safaricom sends 'AccountReference' in the request, 
-    // but in callback it's usually not there unless we use specific metadata.
-    
-    // Most developers use CheckoutRequestID as the key.
-    
+    console.log('M-Pesa Callback Result:', {
+      ResultCode: resultCodeCode,
+      ResultDesc: resultDesc,
+      CheckoutRequestID: checkoutRequestID,
+      fullResult: result
+    });
     let status = 'failed';
     let mpesaReceipt = '';
+    let errorMessage = resultDesc || 'Payment failed';
 
     if (resultCodeCode === 0) {
       status = 'completed'; // Using 'completed' for consistency with frontend polling
       const items = result.CallbackMetadata.Item;
       const receiptItem = items.find((item: { Name: string; Value: any }) => item.Name === 'MpesaReceiptNumber');
       mpesaReceipt = receiptItem ? receiptItem.Value : '';
+      errorMessage = null;
     }
 
     // Update Supabase. 
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       .update({ 
         status, 
         mpesa_receipt: mpesaReceipt,
+        result_desc: resultDesc, // Add this to see the failure reason in DB
         updated_at: new Date().toISOString()
       })
       .eq('checkout_request_id', checkoutRequestID); // Will need this column
