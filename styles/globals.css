@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #0B1E3F;
+  --accent: #0F9D58;
+}
+
+body {
+  background-color: #ffffff;
+  color: #0B1E3F;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
