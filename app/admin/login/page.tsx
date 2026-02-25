@@ -24,8 +24,8 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token in localStorage
-        localStorage.setItem('admin_token', data.token);
+        // Store token in sessionStorage (clears when tab/browser closes)
+        sessionStorage.setItem('admin_token', data.token);
         router.push('/admin');
       } else {
         setError(data.message || 'Invalid password');

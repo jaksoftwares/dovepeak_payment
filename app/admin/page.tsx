@@ -25,7 +25,7 @@ export default function AdminPage() {
   // Check authentication on mount
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('admin_token');
+      const token = sessionStorage.getItem('admin_token');
       if (!token) {
         router.push('/admin/login');
         return false;
@@ -49,7 +49,7 @@ export default function AdminPage() {
 
   const fetchPayments = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = sessionStorage.getItem('admin_token');
       const response = await fetch('/api/admin/payments', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -58,7 +58,7 @@ export default function AdminPage() {
       
       if (response.status === 401) {
         // Token expired or invalid
-        localStorage.removeItem('admin_token');
+        sessionStorage.removeItem('admin_token');
         router.push('/admin/login');
         return;
       }
@@ -78,7 +78,7 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
+    sessionStorage.removeItem('admin_token');
     router.push('/admin/login');
   };
 
