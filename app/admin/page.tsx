@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Payment {
   id: string;
@@ -15,22 +15,54 @@ interface Payment {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed'>('all');
 
+  // Check authentication on mount
   useEffect(() => {
-    fetchPayments();
-    
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchPayments, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const checkAuth = () => {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        router.push('/admin/login');
+        return false;
+      }
+      return true;
+    };
+
+    const authenticated = checkAuth();
+    setIsAuthenticated(authenticated);
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPayments();
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(fetchPayments, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch('/api/admin/payments');
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch('/api/admin/payments', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('admin_token');
+        router.push('/admin/login');
+        return;
+      }
+      
       const data = await response.json();
       
       if (response.ok) {
@@ -43,6 +75,11 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    router.push('/admin/login');
   };
 
   const formatDate = (dateString: string) => {
@@ -84,6 +121,25 @@ export default function AdminPage() {
     .filter(p => p.status === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
 
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <main className="min-h-screen bg-gray-50 p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-4 sm:mb-6"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
+              <div className="h-24 bg-gray-200 rounded-xl"></div>
+              <div className="h-24 bg-gray-200 rounded-xl"></div>
+              <div className="h-24 bg-gray-200 rounded-xl"></div>
+            </div>
+            <div className="h-96 bg-gray-200 rounded-xl"></div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -121,12 +177,15 @@ export default function AdminPage() {
               </svg>
               Refresh
             </button>
-            <Link
-              href="/"
-              className="px-4 py-2 border-2 border-[#27187D] text-[#27187D] rounded-lg hover:bg-gray-50 transition-colors text-center text-sm sm:text-base"
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              Back to Payment Page
-            </Link>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              Logout
+            </button>
           </div>
         </div>
 
@@ -148,7 +207,7 @@ export default function AdminPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-gray-500">Total Received</p>
-                <p className="text-lg sm:text-2xl font-bold text-[#27118D] truncate">KES {totalAmount.toLocaleString()}</p>
+                <p className="text-lg sm:text-2xl font-bold text-[#27187D] truncate">KES {totalAmount.toLocaleString()}</p>
               </div>
             </div>
           </div>
