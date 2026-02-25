@@ -2,12 +2,19 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function AdminLoginPage() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,20 +22,19 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+      const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
+      if (supabaseError) {
+        setError(supabaseError.message);
+        return;
+      }
 
-      if (response.ok) {
-        // Store token in sessionStorage (clears when tab/browser closes)
-        sessionStorage.setItem('admin_token', data.token);
+      if (data.user) {
         router.push('/admin');
-      } else {
-        setError(data.message || 'Invalid password');
+        router.refresh();
       }
     } catch {
       setError('Failed to connect to server');
@@ -61,13 +67,28 @@ export default function AdminLoginPage() {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-[#27187D]">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="admin@dovepeak.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
             <label htmlFor="password" className="block text-sm font-semibold text-[#27187D]">
               Password
             </label>
             <input
               id="password"
               type="password"
-              placeholder="Enter admin password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 
 interface Payment {
   id: string;
@@ -22,43 +23,50 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed'>('all');
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   // Check authentication on mount
   useEffect(() => {
-    const checkAuth = () => {
-      const token = sessionStorage.getItem('admin_token');
-      if (!token) {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
         router.push('/admin/login');
         return false;
       }
       return true;
     };
 
-    const authenticated = checkAuth();
-    setIsAuthenticated(authenticated);
-  }, [router]);
+    checkAuth();
+  }, [supabase, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchPayments();
-      
-      // Auto-refresh every 30 seconds
-      const interval = setInterval(fetchPayments, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
+    fetchPayments();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchPayments, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchPayments = async () => {
     try {
-      const token = sessionStorage.getItem('admin_token');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push('/admin/login');
+        return;
+      }
+      
       const response = await fetch('/api/admin/payments', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
       
       if (response.status === 401) {
-        // Token expired or invalid
-        sessionStorage.removeItem('admin_token');
         router.push('/admin/login');
         return;
       }
@@ -77,8 +85,8 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_token');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/admin/login');
   };
 
