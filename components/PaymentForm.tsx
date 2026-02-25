@@ -38,10 +38,10 @@ export default function PaymentForm() {
 
   // Handle successful payment redirect - useEffect to avoid setState during render
   useEffect(() => {
-    if (state === 'success' && reference && amount) {
-      router.push(`/success?ref=${reference}&amount=${amount}`);
+    if (state === 'success' && reference && amount && checkoutRequestId) {
+      router.push(`/success?ref=${reference}&amount=${amount}&checkoutId=${checkoutRequestId}`);
     }
-  }, [state, reference, amount, router]);
+  }, [state, reference, amount, checkoutRequestId, router]);
 
   const checkPaymentStatus = async (checkoutId: string) => {
     try {

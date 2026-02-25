@@ -5,24 +5,92 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 interface PaymentDetails {
-  ref?: string;
+  reference?: string;
   amount?: string;
+  phone?: string;
+  mpesa_receipt?: string;
+  updated_at?: string;
+  status?: string;
 }
 
 function SuccessPageContent() {
   const searchParams = useSearchParams();
   const [animate, setAnimate] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const reference = searchParams.get('ref') || 'N/A';
   const amount = searchParams.get('amount') || 'N/A';
+  const checkoutId = searchParams.get('checkoutId');
 
   useEffect(() => {
     // Trigger animations on mount
     setTimeout(() => setAnimate(true), 100);
   }, []);
 
+  // Fetch full payment details from the database
+  useEffect(() => {
+    const fetchPaymentDetails = async () => {
+      if (!checkoutId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/check-status?checkoutRequestId=${checkoutId}`);
+        const data = await response.json();
+        
+        if (data.status === 'completed') {
+          setPaymentDetails({
+            reference: data.reference,
+            amount: data.amount,
+            phone: data.phone,
+            mpesa_receipt: data.mpesa_receipt,
+            updated_at: data.updated_at,
+            status: data.status
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching payment details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentDetails();
+  }, [checkoutId]);
+
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-KE', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Format phone number for display
+  const formatPhone = (phone?: string) => {
+    if (!phone) return 'N/A';
+    // Format as 07XX XXX XXX
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 12) {
+      return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+    }
+    return phone;
+  };
+
+  const displayAmount = paymentDetails?.amount || amount;
+  const displayReceipt = paymentDetails?.mpesa_receipt || 'Processing...';
+  const displayPhone = paymentDetails?.phone || 'N/A';
+  const displayDate = paymentDetails?.updated_at ? formatDate(paymentDetails.updated_at) : formatDate();
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#27187D] via-[#472CE3] to-[#6B4EE6] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className={`w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center transform transition-all duration-700 ${animate ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
         {/* Animated Success Icon */}
         <div className={`relative w-24 h-24 mx-auto mb-6 transform transition-all duration-500 ${animate ? 'scale-100' : 'scale-0'}`}>
@@ -42,36 +110,64 @@ function SuccessPageContent() {
           <div className="absolute top-0 left-0 w-full h-full rounded-full border-2 border-green-400 animate-ping opacity-30"></div>
         </div>
         
-        {/* Thank You Message */}
+        {/* Enhanced Thank You Message */}
         <h1 className="text-3xl font-bold text-[#27187D] mb-2">
           Thank You! 🎉
         </h1>
-        <h2 className="text-xl font-semibold text-[#0F9D58] mb-6">
+        <h2 className="text-xl font-semibold text-[#0F9D58] mb-4">
           Payment Successful
         </h2>
         
+        {/* Confirmation Message */}
+        <div className="bg-green-50 rounded-xl p-4 mb-6 border border-green-100">
+          <p className="text-sm text-green-800 font-medium">
+            ✓ Confirmed payment of <span className="font-bold">KES {Number(displayAmount).toLocaleString()}</span> to <span className="font-bold">Dovepeak Digital Solutions</span>
+          </p>
+        </div>
+
         <p className="text-gray-600 mb-8 leading-relaxed">
           Your payment has been received and processed successfully. A confirmation message has been sent to your phone.
         </p>
 
         {/* Receipt Details */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-8 border border-gray-200">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-green-100 p-3 rounded-full">
-              <svg className="w-6 h-6 text-[#0F9D58]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          {/* Receipt Header */}
+          <div className="flex items-center justify-center mb-4 pb-4 border-b border-gray-200">
+            <div className="bg-[#27187D] p-2 rounded-lg mr-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-[#27187D]">Payment Receipt</h3>
+              <p className="text-xs text-gray-500">Dovepeak Digital Solutions</p>
             </div>
           </div>
           
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500 text-sm">Amount Paid</span>
-              <span className="text-[#27187D] font-bold text-lg">KES {Number(amount).toLocaleString()}</span>
+              <span className="text-[#27187D] font-bold text-lg">KES {Number(displayAmount).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500 text-sm">Account</span>
+              <span className="text-[#27187D] font-semibold">Joseph Amuyunzu Kirika</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500 text-sm">M-Pesa Receipt</span>
+              <span className="text-[#27187D] font-mono font-semibold">{displayReceipt}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500 text-sm">Reference</span>
               <span className="text-[#27187D] font-mono font-semibold">{reference}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500 text-sm">Phone Number</span>
+              <span className="text-[#27187D] font-semibold">{formatPhone(displayPhone)}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500 text-sm">Date & Time</span>
+              <span className="text-[#27187D] font-semibold text-sm">{displayDate}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-500 text-sm">Status</span>
@@ -123,7 +219,7 @@ function SuccessPageContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen bg-gradient-to-br from-[#27187D] via-[#472CE3] to-[#6B4EE6] flex items-center justify-center p-4">
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 text-center">
           <div className="animate-pulse">
             <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 rounded-full"></div>
