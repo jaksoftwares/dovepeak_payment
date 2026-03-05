@@ -5,7 +5,7 @@ import { isValidPhone } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, amount } = await req.json();
+    const { phone, amount, type } = await req.json();
 
     // 1. Validate
     if (!phone || !amount) {
@@ -13,12 +13,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isValidPhone(phone)) {
-      console.log('Payment Request - Invalid phone:', { phone, amount });
+      console.log('Payment Request - Invalid phone:', { phone, amount, type });
       return NextResponse.json({ message: 'Invalid phone format' }, { status: 400 });
     }
 
     // 2. Generate a reference
-    const reference = `DP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    const prefix = type === 'donation' ? 'DN' : 'DP';
+    const reference = `${prefix}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 
     // 3. Send STK Push
     const stkResponse = await sendStkPush(phone, amount, reference);
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
           status: 'pending',
           mpesa_receipt: null,
           checkout_request_id: stkResponse.CheckoutRequestID,
+          type: type || 'payment',
         });
 
       if (dbError) {

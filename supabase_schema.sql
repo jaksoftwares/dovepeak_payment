@@ -7,6 +7,7 @@ CREATE TABLE payments (
   checkout_request_id TEXT UNIQUE,
   mpesa_receipt TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed', 'completed')),
+  type TEXT DEFAULT 'payment', -- 'payment' or 'donation'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
