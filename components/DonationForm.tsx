@@ -12,9 +12,9 @@ const PAYMENT_TIMEOUT = 120000; // 2 minutes
 const POLLING_INTERVAL = 3000; // 3 seconds
 
 export default function DonationForm() {
-  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
+
 
   const [state, setState] = useState<DonationState>('idle');
   const [error, setError] = useState('');
@@ -100,12 +100,8 @@ export default function DonationForm() {
     e.preventDefault();
     setError('');
     
-    if (!name.trim()) {
-      setError('Please enter your full name');
-      return;
-    }
-
     if (!isValidPhone(phone)) {
+
 
       setError('Please enter a valid M-Pesa phone number (e.g. 0712345678)');
       return;
@@ -124,11 +120,11 @@ export default function DonationForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
           phone: formatPhone(phone),
           amount: Number(amount),
           type: 'donation', // Add type for identification
         }),
+
 
       });
 
@@ -157,8 +153,8 @@ export default function DonationForm() {
   const resetForm = () => {
     stopPolling();
     setState('idle');
-    setName('');
     setPhone('');
+
 
     setAmount('');
     setReference('');
