@@ -103,7 +103,35 @@ function DonationSuccessContent() {
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className={`w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 text-center transform transition-all duration-700 ${animate ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 0;
+            size: auto;
+          }
+          body {
+            background-color: white;
+          }
+          main {
+            padding: 0 !important;
+            background: white !important;
+            display: block !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-container {
+            box-shadow: none !important;
+            border: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+          }
+        }
+      `}</style>
+      <div className={`w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 text-center transform transition-all duration-700 print-container ${animate ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+
         
         {/* Donation Success Header */}
         <div className={`relative w-24 h-24 mx-auto mb-6 transform transition-all duration-500 ${animate ? 'scale-100' : 'scale-0'}`}>
@@ -157,18 +185,18 @@ function DonationSuccessContent() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 no-print">
           <Link 
             href="/donations"
             className="block w-full bg-[#472CE3] text-white font-semibold py-3 sm:py-4 rounded-xl hover:bg-[#3216B0] transition-all shadow-lg text-sm sm:text-base"
           >
             Back to Donations
           </Link>
+
           
           <button 
             onClick={handlePrint}
-
-            className="w-full bg-white text-gray-600 font-medium py-2.5 sm:py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full bg-white text-gray-600 font-medium py-2.5 sm:py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base no-print"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
@@ -177,11 +205,13 @@ function DonationSuccessContent() {
           </button>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-gray-100">
+
+        <div className="mt-8 pt-4 border-t border-gray-100 no-print">
           <p className="text-[10px] text-gray-400">
             Dovepeak Digital Solutions • Secure Payment Processing
           </p>
         </div>
+
       </div>
     </main>
   );

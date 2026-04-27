@@ -108,7 +108,35 @@ function SuccessPageContent() {
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className={`w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 text-center transform transition-all duration-700 ${animate ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 0;
+            size: auto;
+          }
+          body {
+            background-color: white;
+          }
+          main {
+            padding: 0 !important;
+            background: white !important;
+            display: block !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-container {
+            box-shadow: none !important;
+            border: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+          }
+        }
+      `}</style>
+      <div className={`w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 text-center transform transition-all duration-700 print-container ${animate ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+
         {/* Animated Success Icon */}
         <div className={`relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 transform transition-all duration-500 ${animate ? 'scale-100' : 'scale-0'}`}>
           <div className="absolute top-0 left-0 w-full h-full bg-green-100 rounded-full"></div>
@@ -229,11 +257,12 @@ function SuccessPageContent() {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 sm:mt-8 pt-4 border-t border-gray-100">
+        <div className="mt-6 sm:mt-8 pt-4 border-t border-gray-100 no-print">
           <p className="text-xs text-gray-400">
             Powered by Safaricom M-Pesa • DovePeak Digital
           </p>
         </div>
+
       </div>
     </main>
   );
