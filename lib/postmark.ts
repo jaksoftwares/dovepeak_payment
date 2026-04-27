@@ -103,7 +103,7 @@ export async function sendPaymentReceipt(data: ReceiptData) {
             </p>
 
             <div style="text-align: center;">
-              <a href="https://dovepeakdigital.com" class="action-button">Go to Dashboard</a>
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin" class="action-button">Go to Admin Dashboard</a>
             </div>
           </div>
           <div class="footer">
@@ -123,7 +123,7 @@ export async function sendPaymentReceipt(data: ReceiptData) {
     if (customerEmail) recipients.push(customerEmail);
 
     await client.sendEmail({
-      From: FROM_EMAIL,
+      From: `Dovepeak Digital <${FROM_EMAIL}>`,
       To: recipients.join(', '),
       Subject: `Receipt for Payment: ${mpesaReceipt} - Dovepeak Digital`,
       HtmlBody: htmlContent,

@@ -23,10 +23,10 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed'>('all');
 
-  const supabase = createBrowserClient(
+  const supabase = React.useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
 
   // Check authentication on mount
   useEffect(() => {
@@ -35,9 +35,10 @@ export default function AdminPage() {
       
       if (!session) {
         router.push('/admin/login');
-        return false;
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
       }
-      return true;
     };
 
     checkAuth();
