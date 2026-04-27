@@ -11,6 +11,7 @@ interface DonationDetails {
   mpesa_receipt?: string;
   updated_at?: string;
   full_name?: string;
+  status?: string;
 }
 
 
