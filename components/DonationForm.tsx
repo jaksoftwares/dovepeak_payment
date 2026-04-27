@@ -276,19 +276,6 @@ export default function DonationForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 w-full max-w-md">
-      <div className="space-y-2">
-        <label htmlFor="name" className="block text-sm font-semibold text-[#472CE3]">
-          Your Full Name
-        </label>
-        <input
-          id="name"
-          type="text"
-          placeholder="John Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
-        />
-      </div>
 
       <div className="space-y-2">
 
