@@ -11,7 +11,9 @@ interface Payment {
   amount: number;
   status: string;
   mpesa_receipt: string | null;
+  full_name: string | null;
   created_at: string;
+
   updated_at: string;
 }
 
@@ -279,7 +281,9 @@ export default function AdminPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payer Name</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reference</th>
+
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">M-Pesa Receipt</th>
@@ -299,9 +303,13 @@ export default function AdminPage() {
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-600">
                         {formatDate(payment.created_at)}
                       </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-800">
+                        {payment.full_name || 'N/A'}
+                      </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <span className="font-mono text-xs sm:text-sm font-medium text-[#27187D]">{payment.reference}</span>
                       </td>
+
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-600">
                         {formatPhone(payment.phone)}
                       </td>

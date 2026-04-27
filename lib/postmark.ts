@@ -11,11 +11,14 @@ interface ReceiptData {
   phone: string;
   reference: string;
   mpesaReceipt: string;
+  fullName: string;
   customerEmail?: string;
 }
 
+
 export async function sendPaymentReceipt(data: ReceiptData) {
-  const { amount, phone, reference, mpesaReceipt, customerEmail } = data;
+  const { amount, phone, reference, mpesaReceipt, fullName, customerEmail } = data;
+
 
   const formattedPhone = phone.replace(/\D/g, '');
   const displayPhone = formattedPhone.length === 12 
@@ -75,9 +78,14 @@ export async function sendPaymentReceipt(data: ReceiptData) {
             
             <table class="details-grid">
               <tr class="detail-row">
+                <td class="detail-label">Payer Name</td>
+                <td class="detail-value">${fullName}</td>
+              </tr>
+              <tr class="detail-row">
                 <td class="detail-label">Receipt Number</td>
                 <td class="detail-value">${mpesaReceipt}</td>
               </tr>
+
               <tr class="detail-row">
                 <td class="detail-label">Reference</td>
                 <td class="detail-value">${reference}</td>
@@ -125,9 +133,10 @@ export async function sendPaymentReceipt(data: ReceiptData) {
     await client.sendEmail({
       From: `Dovepeak Digital <${FROM_EMAIL}>`,
       To: recipients.join(', '),
-      Subject: `Receipt for Payment: ${mpesaReceipt} - Dovepeak Digital`,
+      Subject: `Receipt for Payment from ${fullName}: ${mpesaReceipt} - Dovepeak Digital`,
       HtmlBody: htmlContent,
-      TextBody: `Payment Receipt\n\nAmount: KES ${amount}\nReceipt: ${mpesaReceipt}\nReference: ${reference}\nPhone: ${displayPhone}\nDate: ${formattedDate}\n\nThank you for choosing Dovepeak Digital.`,
+      TextBody: `Payment Receipt\n\nName: ${fullName}\nAmount: KES ${amount}\nReceipt: ${mpesaReceipt}\nReference: ${reference}\nPhone: ${displayPhone}\nDate: ${formattedDate}\n\nThank you for choosing Dovepeak Digital.`,
+
       MessageStream: 'outbound'
     });
 

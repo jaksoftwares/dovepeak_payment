@@ -11,6 +11,7 @@ interface PaymentDetails {
   mpesa_receipt?: string;
   updated_at?: string;
   status?: string;
+  full_name?: string;
 }
 
 function SuccessPageContent() {
@@ -47,8 +48,10 @@ function SuccessPageContent() {
             phone: data.phone,
             mpesa_receipt: data.mpesa_receipt,
             updated_at: data.updated_at,
-            status: data.status
+            status: data.status,
+            full_name: data.full_name
           });
+
         }
       } catch (err) {
         console.error('Error fetching payment details:', err);
@@ -84,7 +87,21 @@ function SuccessPageContent() {
     return phone;
   };
 
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    const receiptName = `Dovepeak_Payment_Receipt_${paymentDetails?.mpesa_receipt || reference}`;
+    document.title = receiptName;
+    window.print();
+    // Restore title after a short delay to ensure print dialog captures it
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 100);
+  };
+
   const displayAmount = paymentDetails?.amount || amount;
+  const displayName = paymentDetails?.full_name || 'N/A';
+
+
   const displayReceipt = paymentDetails?.mpesa_receipt || 'Processing...';
   const displayPhone = paymentDetails?.phone || 'N/A';
   const displayDate = paymentDetails?.updated_at ? formatDate(paymentDetails.updated_at) : formatDate();
@@ -150,9 +167,14 @@ function SuccessPageContent() {
               <span className="text-[#27187D] font-bold text-base sm:text-lg">KES {Number(displayAmount).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-500 text-sm">Payer Name</span>
+              <span className="text-[#27187D] font-semibold text-sm">{displayName}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500 text-sm">Account</span>
               <span className="text-[#27187D] font-semibold text-sm">Joseph Amuyunzu Kirika</span>
             </div>
+
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500 text-sm">M-Pesa Receipt</span>
               <span className="text-[#27187D] font-mono font-semibold text-sm">{displayReceipt}</span>
@@ -195,7 +217,8 @@ function SuccessPageContent() {
           </Link>
           
           <button 
-            onClick={() => window.print()}
+            onClick={handlePrint}
+
             className="w-full bg-gray-100 text-gray-700 font-medium py-2.5 sm:py-3 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

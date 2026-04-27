@@ -12,8 +12,10 @@ const PAYMENT_TIMEOUT = 120000; // 2 minutes
 const POLLING_INTERVAL = 3000; // 3 seconds
 
 export default function PaymentForm() {
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
+
   const [state, setState] = useState<PaymentState>('idle');
   const [error, setError] = useState('');
   const [reference, setReference] = useState('');
@@ -22,7 +24,7 @@ export default function PaymentForm() {
   const router = useRouter();
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [waitingTime, setWaitingTime] = useState(0);
+
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -72,23 +74,22 @@ export default function PaymentForm() {
 
     // Start the timeout timer
     const startTime = Date.now();
-    const updateWaitingTime = () => {
+    const checkTimeout = () => {
       if (pollingRef.current) {
-        setWaitingTime(Math.floor((Date.now() - startTime) / 1000));
-        
         // Check if we've exceeded the timeout
         if (Date.now() - startTime >= PAYMENT_TIMEOUT) {
           stopPolling();
           setError('Payment request timed out. Please try again.');
           setState('failed');
         } else {
-          // Continue updating the waiting time
-          timeoutRef.current = setTimeout(updateWaitingTime, 1000);
+          // Continue checking the timeout
+          timeoutRef.current = setTimeout(checkTimeout, 1000);
         }
       }
     };
     
-    timeoutRef.current = setTimeout(updateWaitingTime, 1000);
+    timeoutRef.current = setTimeout(checkTimeout, 1000);
+
   }, []);
 
   const stopPolling = useCallback(() => {
@@ -106,7 +107,13 @@ export default function PaymentForm() {
     e.preventDefault();
     setError('');
     
+    if (!name.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+
     if (!isValidPhone(phone)) {
+
       setError('Please enter a valid M-Pesa phone number (e.g. 0712345678)');
       return;
     }
@@ -124,9 +131,11 @@ export default function PaymentForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: name.trim(),
           phone: formatPhone(phone),
           amount: Number(amount),
         }),
+
       });
 
       const data = await response.json();
@@ -135,8 +144,8 @@ export default function PaymentForm() {
         // STK push sent successfully
         setReference(data.reference);
         setCheckoutRequestId(data.checkoutRequestId);
-        setWaitingTime(0);
         setState('waiting');
+
         setStatusMessage('Waiting for payment confirmation...');
         
         // Start polling for payment status
@@ -156,13 +165,15 @@ export default function PaymentForm() {
   const resetForm = () => {
     stopPolling();
     setState('idle');
+    setName('');
     setPhone('');
+
     setAmount('');
     setReference('');
     setCheckoutRequestId('');
     setError('');
     setStatusMessage('');
-    setWaitingTime(0);
+
   };
 
   // Loading/Sending State
@@ -181,46 +192,67 @@ export default function PaymentForm() {
 
   // Waiting for Payment State
   if (state === 'waiting') {
-    const remainingTime = Math.max(0, Math.ceil((PAYMENT_TIMEOUT / 1000 - waitingTime) / 60));
-    const progress = Math.min(100, (waitingTime / (PAYMENT_TIMEOUT / 1000)) * 100);
-    
     return (
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 text-center">
         <WaitingLoader />
         <h2 className="text-lg sm:text-xl font-bold text-[#27187D] mt-4 sm:mt-6">Check Your Phone!</h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          We've sent an M-Pesa prompt to <span className="font-semibold">{phone}</span>
+          We've sent an M-Pesa prompt to <span className="font-semibold text-[#472CE3]">{phone}</span>
         </p>
-        <div className="mt-4 sm:mt-6 bg-blue-50 rounded-xl p-3 sm:p-4 border border-blue-100">
-          <p className="text-sm text-blue-700">
-            📱 Enter your M-Pesa PIN on your phone to complete payment
+
+        {/* Professional Status Steps */}
+        <div className="mt-8 space-y-4 text-left">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Securely Initiated</p>
+              <p className="text-xs text-gray-500">The secure payment portal has been contacted</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center relative">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Awaiting Authorization</p>
+              <p className="text-xs text-gray-500">Please confirm the request on your mobile device</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 opacity-40">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Confirming Payment</p>
+              <p className="text-xs text-gray-500">Completing the transaction with Safaricom</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100/50 flex items-center gap-3">
+          <div className="text-xl">📱</div>
+          <p className="text-xs text-blue-700 text-left leading-relaxed">
+            Keep this window open. Once you enter your PIN, we'll automatically detect the payment.
           </p>
         </div>
+
         
-        {/* Waiting Timer */}
-        <div className="mt-4 sm:mt-6 space-y-2">
-          <div className="flex justify-between text-xs sm:text-sm text-gray-500">
-            <span>Waiting: {waitingTime}s</span>
-            <span>Timeout: {remainingTime} min</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
+        <div className="mt-6 flex flex-col items-center gap-4">
+          <div className="text-xs text-gray-400 font-mono">Ref: {reference}</div>
+          <button 
+            onClick={resetForm}
+            className="text-sm font-medium text-gray-400 hover:text-red-500 transition-colors"
+          >
+            Cancel Transaction
+          </button>
         </div>
-        
-        <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-400">
-          <p>Reference: {reference}</p>
-        </div>
-        <Button 
-          variant="outline" 
-          onClick={resetForm}
-          className="mt-4 sm:mt-6"
-        >
-          Cancel
-        </Button>
       </div>
     );
   }
@@ -262,6 +294,21 @@ export default function PaymentForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 w-full max-w-md">
       <div className="space-y-2">
+        <label htmlFor="name" className="block text-sm font-semibold text-[#27187D]">
+          Full Name
+        </label>
+        <input
+          id="name"
+          type="text"
+          placeholder="John Doe"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
+        />
+      </div>
+
+      <div className="space-y-2">
+
         <label htmlFor="phone" className="block text-sm font-semibold text-[#27187D]">
           Phone Number
         </label>

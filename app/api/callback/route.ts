@@ -61,8 +61,10 @@ export async function POST(req: NextRequest) {
         amount: existingPayment.amount,
         phone: existingPayment.phone,
         reference: existingPayment.reference,
-        mpesaReceipt: mpesaReceipt
+        mpesaReceipt: mpesaReceipt,
+        fullName: existingPayment.full_name || 'Valued Customer'
       });
+
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Success' });

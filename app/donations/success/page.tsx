@@ -10,8 +10,9 @@ interface DonationDetails {
   phone?: string;
   mpesa_receipt?: string;
   updated_at?: string;
-  status?: string;
+  full_name?: string;
 }
+
 
 function DonationSuccessContent() {
   const searchParams = useSearchParams();
@@ -45,8 +46,10 @@ function DonationSuccessContent() {
             phone: data.phone,
             mpesa_receipt: data.mpesa_receipt,
             updated_at: data.updated_at,
-            status: data.status
+            status: data.status,
+            full_name: data.full_name
           });
+
         }
       } catch (err) {
         console.error('Error fetching donation details:', err);
@@ -79,7 +82,20 @@ function DonationSuccessContent() {
     return phone;
   };
 
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    const receiptName = `Dovepeak_Donation_Receipt_${details?.mpesa_receipt || reference}`;
+    document.title = receiptName;
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 100);
+  };
+
   const displayAmount = details?.amount || amount;
+  const displayName = details?.full_name || 'N/A';
+
+
   const displayReceipt = details?.mpesa_receipt || 'Processing...';
   const displayPhone = details?.phone || 'N/A';
   const displayDate = details?.updated_at ? formatDate(details.updated_at) : formatDate();
@@ -117,9 +133,14 @@ function DonationSuccessContent() {
               <span className="text-[#27187D] font-bold text-lg">KES {Number(displayAmount).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
+              <span className="text-gray-500 text-sm">Donor Name</span>
+              <span className="text-[#27187D] font-semibold text-sm">{displayName}</span>
+            </div>
+            <div className="flex justify-between items-center">
               <span className="text-gray-500 text-sm">To Account</span>
               <span className="text-[#27187D] font-semibold text-sm">Joseph Amuyunzu Kirika</span>
             </div>
+
             <div className="flex justify-between items-center">
               <span className="text-gray-500 text-sm">Reference</span>
               <span className="text-[#27187D] font-mono font-semibold text-sm">{reference}</span>
@@ -144,7 +165,8 @@ function DonationSuccessContent() {
           </Link>
           
           <button 
-            onClick={() => window.print()}
+            onClick={handlePrint}
+
             className="w-full bg-white text-gray-600 font-medium py-2.5 sm:py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
