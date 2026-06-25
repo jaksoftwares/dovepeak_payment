@@ -30,7 +30,7 @@ The system is designed for autonomous operation. Log data is persisted in GitHub
 ### Viewing Logs
 1. Navigate to the GitHub repository **Actions** tab.
 2. Select the **Supabase Health Monitoring** workflow.
-3. You will see a chronological list of runs (one every 15 minutes).
+3. You will see a chronological list of runs (one every 3 days).
 4. Click any run to inspect the logs. 
    - **Successful check:** Will print a green checkmark and the JSON payload containing the duration in milliseconds.
    - **Failed check:** Will print the error message and the HTTP status code.
@@ -61,4 +61,4 @@ The automated workflow is built with transient failure recovery (it will retry 3
 ## 4. Maintenance Guide
 
 *   **Rotating Secrets:** If your domain name changes, update the `HEALTH_CHECK_URL` repository variable. No application code changes are required.
-*   **GitHub Actions Quotas:** The workflow runs lightweight JavaScript (`github-script`) and executes very quickly (typically < 2 seconds). Running every 15 minutes consumes approximately 2,800 minutes per month. Note that GitHub provides 2,000 free minutes per month for private repos on the free tier. If you run out of minutes, consider lowering the frequency to `*/30 * * * *` (every 30 minutes) or using an alternative monitoring solution (see Alternatives Guide). Public repositories have unlimited minutes.
+*   **GitHub Actions Quotas:** The workflow runs lightweight JavaScript (`github-script`) and executes very quickly (typically < 2 seconds). Running every 3 days consumes less than 1 minute per month, which is well within the 2,000 free minutes provided by GitHub for private repos.

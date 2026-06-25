@@ -83,7 +83,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to view th
 ## 🛡️ Security & Monitoring
 
 - **Row Level Security (RLS):** Enabled on Supabase to ensure clients can only insert requests, while webhook callbacks securely update statuses.
-- **Activity Monitoring:** Includes a `/api/health` endpoint and a GitHub Actions scheduler (`supabase-health-check.yml`) that runs every 15 minutes to ensure the Supabase instance remains active and never pauses. See `docs/monitoring` for more details.
+- **Activity Monitoring:** Includes a `/api/health` endpoint and a GitHub Actions scheduler (`supabase-health-check.yml`) that runs every 3 days to ensure the Supabase instance remains active and never pauses. See `docs/monitoring` for more details.
 
 ---
 

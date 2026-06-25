@@ -31,7 +31,7 @@ The endpoint utilizes the existing `supabase-js` client initialized with the ano
 ### 3. The Automation Engine (GitHub Actions)
 A GitHub Actions workflow acts as the scheduler and test runner.
 - **Location:** `.github/workflows/supabase-health-check.yml`
-- **Schedule:** Executes every 15 minutes (`*/15 * * * *`).
+- **Schedule:** Executes every 3 days (`0 0 */3 * *`).
 - **Behavior:**
   - Uses an embedded JavaScript action (`github-script`) to `fetch()` the health endpoint.
   - Expects a `200 OK` and a `status: "healthy"` payload.
@@ -46,7 +46,7 @@ sequenceDiagram
     participant API as Next.js API (/api/health)
     participant DB as Supabase Database
 
-    GH->>API: GET /api/health (every 15m)
+    GH->>API: GET /api/health (every 3 days)
     API->>DB: SELECT id FROM payments LIMIT 1
     DB-->>API: Result (Rows or Error)
     
