@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import Footer from '@/components/Footer';
 
 export default function AdminSignupPage() {
   const [email, setEmail] = useState('');
@@ -12,6 +14,7 @@ export default function AdminSignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
   const router = useRouter();
 
   const supabase = createClient();
@@ -28,6 +31,11 @@ export default function AdminSignupPage() {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!consent) {
+      setError('You must agree to the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -60,7 +68,7 @@ export default function AdminSignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8">
         <div className="text-center mb-6 sm:mb-8">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#27187D] rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -153,6 +161,26 @@ export default function AdminSignupPage() {
             />
           </div>
 
+          <div className="flex items-start gap-3 pt-1">
+            <input 
+              type="checkbox" 
+              id="consent" 
+              checked={consent} 
+              onChange={(e) => setConsent(e.target.checked)} 
+              className="mt-0.5 w-4 h-4 text-[#27187D] rounded border-gray-300 focus:ring-[#472CE3]" 
+            />
+            <label htmlFor="consent" className="text-xs text-gray-600 leading-tight">
+              I have read and agree to the{' '}
+              <Link href="/terms" className="text-[#27187D] hover:underline" target="_blank">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-[#27187D] hover:underline" target="_blank">
+                Privacy Policy
+              </Link>.
+            </label>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -178,6 +206,7 @@ export default function AdminSignupPage() {
           </a>
         </div>
       </div>
+      <Footer className="mt-8" />
     </main>
   );
 }

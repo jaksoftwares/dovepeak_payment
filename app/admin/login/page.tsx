@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import Footer from '@/components/Footer';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -42,7 +43,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
@@ -139,6 +140,7 @@ export default function AdminLoginPage() {
           </a>
         </div>
       </div>
+      <Footer className="mt-8" />
     </main>
   );
 }

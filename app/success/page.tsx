@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import Footer from '@/components/Footer';
 
 interface PaymentDetails {
   reference?: string;
@@ -115,7 +116,7 @@ function SuccessPageContent() {
   const displayPurpose = paymentDetails?.purpose_of_payment;
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       <style jsx global>{`
         @media print {
           @page {
@@ -264,13 +265,11 @@ function SuccessPageContent() {
           </button>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 sm:mt-8 pt-4 border-t border-gray-100 no-print">
-          <p className="text-xs text-gray-400">
-            Powered by Safaricom M-Pesa • DovePeak Digital
-          </p>
         </div>
-
+      </div>
+      
+      <div className="no-print w-full">
+        <Footer className="mt-8" />
       </div>
     </main>
   );
@@ -279,7 +278,7 @@ function SuccessPageContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 text-center">
           <div className="animate-pulse">
             <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 bg-gray-200 rounded-full"></div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from './Button';
 import { formatPhone, isValidPhone } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export default function PaymentForm() {
   const [amount, setAmount] = useState('');
   const [fullName, setFullName] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [consent, setConsent] = useState(false);
 
   const [state, setState] = useState<PaymentState>('idle');
   const [error, setError] = useState('');
@@ -122,6 +124,11 @@ export default function PaymentForm() {
       return;
     }
 
+    if (!consent) {
+      setError('You must agree to the Terms of Service and Privacy Policy.');
+      return;
+    }
+
     // Purpose is optional, but if provided, validate length
     let sanitizedPurpose = purpose.trim();
     if (sanitizedPurpose.length > 255) {
@@ -175,6 +182,7 @@ export default function PaymentForm() {
     setAmount('');
     setFullName('');
     setPurpose('');
+    setConsent(false);
     setReference('');
     setCheckoutRequestId('');
     setError('');
@@ -360,6 +368,26 @@ export default function PaymentForm() {
           onChange={(e) => setAmount(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
         />
+      </div>
+
+      <div className="flex items-start gap-3 pt-1">
+        <input 
+          type="checkbox" 
+          id="consent" 
+          checked={consent} 
+          onChange={(e) => setConsent(e.target.checked)} 
+          className="mt-0.5 w-4 h-4 text-[#27187D] rounded border-gray-300 focus:ring-[#472CE3]" 
+        />
+        <label htmlFor="consent" className="text-xs text-gray-600 leading-tight">
+          I have read and agree to the{' '}
+          <Link href="/terms" className="text-[#27187D] hover:underline" target="_blank">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="text-[#27187D] hover:underline" target="_blank">
+            Privacy Policy
+          </Link>.
+        </label>
       </div>
 
       {error && <p className="text-red-500 text-sm font-medium">{error}</p>}

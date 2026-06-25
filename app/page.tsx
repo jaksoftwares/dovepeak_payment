@@ -1,9 +1,10 @@
 import Image from 'next/image';
 import PaymentForm from '@/components/PaymentForm';
+import Footer from '@/components/Footer';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         {/* Header/Banner */}
         <div className="bg-[#27187D] p-6 sm:p-8 text-center">
@@ -24,14 +25,9 @@ export default function Home() {
         <div className="p-6 sm:p-8 pb-8 sm:pb-10">
           <PaymentForm />
         </div>
-
-        {/* Footer */}
-        <div className="bg-gray-50 p-4 sm:p-6 border-t border-gray-100 text-center">
-          <p className="text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} Dovepeak Digital Solutions. All rights reserved.
-          </p>
-        </div>
       </div>
+      
+      <Footer className="mt-8" />
     </main>
   );
 }
