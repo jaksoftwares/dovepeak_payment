@@ -57,7 +57,7 @@ export default function PaymentForm() {
       } else if (data.status === 'failed') {
         // Payment failed
         stopPolling();
-        setError('Payment was declined. Please try again.');
+        setError('The payment could not be completed. Please try again.');
         setState('failed');
       }
       // If 'pending', continue polling
@@ -79,7 +79,7 @@ export default function PaymentForm() {
         // Check if we've exceeded the timeout
         if (Date.now() - startTime >= PAYMENT_TIMEOUT) {
           stopPolling();
-          setError('Payment request timed out. Please try again.');
+          setError('The payment request expired. Please try again.');
           setState('failed');
         } else {
           // Continue checking the timeout
@@ -108,29 +108,29 @@ export default function PaymentForm() {
     setError('');
     
     if (!fullName.trim()) {
-      setError('Please enter your full name');
+      setError('Enter your full name.');
       return;
     }
 
     if (!isValidPhone(phone)) {
-      setError('Please enter a valid M-Pesa phone number (e.g. 0712345678)');
+      setError('Enter a valid Safaricom phone number.');
       return;
     }
 
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      setError('Please enter a valid amount');
+      setError('Enter a valid amount.');
       return;
     }
 
     // Purpose is optional, but if provided, validate length
     let sanitizedPurpose = purpose.trim();
     if (sanitizedPurpose.length > 255) {
-      setError('Purpose of payment is too long (maximum 255 characters)');
+      setError('Purpose of payment must not exceed 255 characters.');
       return;
     }
 
     setState('sending');
-    setStatusMessage('Sending payment request...');
+    setStatusMessage('Submitting payment request...');
 
     try {
       const response = await fetch('/api/stkpush', {
@@ -152,7 +152,7 @@ export default function PaymentForm() {
         setCheckoutRequestId(data.checkoutRequestId);
         setState('waiting');
 
-        setStatusMessage('Waiting for payment confirmation...');
+        setStatusMessage('Awaiting payment confirmation...');
         
         // Start polling for payment status
         if (data.checkoutRequestId) {
@@ -163,7 +163,7 @@ export default function PaymentForm() {
         setState('failed');
       }
     } catch {
-      setError('Failed to connect to the server. Please try again.');
+      setError('Unable to connect. Please try again.');
       setState('failed');
     }
   };
@@ -200,9 +200,9 @@ export default function PaymentForm() {
     return (
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 text-center">
         <WaitingLoader />
-        <h2 className="text-lg sm:text-xl font-bold text-[#27187D] mt-4 sm:mt-6">Check Your Phone!</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-[#27187D] mt-4 sm:mt-6">Authorize Payment</h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          We've sent an M-Pesa prompt to <span className="font-semibold text-[#472CE3]">{phone}</span>
+          An M-Pesa authorization request has been sent to <span className="font-semibold text-[#472CE3]">{phone}</span>
         </p>
 
         {/* Professional Status Steps */}
@@ -214,8 +214,8 @@ export default function PaymentForm() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Securely Initiated</p>
-              <p className="text-xs text-gray-500">The secure payment portal has been contacted</p>
+              <p className="text-sm font-semibold text-gray-800">Request Submitted</p>
+              <p className="text-xs text-gray-500">Your payment request has been submitted.</p>
             </div>
           </div>
 
@@ -224,8 +224,8 @@ export default function PaymentForm() {
               <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Awaiting Authorization</p>
-              <p className="text-xs text-gray-500">Please confirm the request on your mobile device</p>
+              <p className="text-sm font-semibold text-gray-800">Awaiting Approval</p>
+              <p className="text-xs text-gray-500">Approve the request on your phone.</p>
             </div>
           </div>
 
@@ -234,17 +234,16 @@ export default function PaymentForm() {
               <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Confirming Payment</p>
-              <p className="text-xs text-gray-500">Completing the transaction with Safaricom</p>
+              <p className="text-sm font-semibold text-gray-800">Processing Payment</p>
+              <p className="text-xs text-gray-500">Finalizing your transaction.</p>
             </div>
           </div>
 
         </div>
 
         <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100/50 flex items-center gap-3">
-          <div className="text-xl">📱</div>
           <p className="text-xs text-blue-700 text-left leading-relaxed">
-            Keep this window open. Once you enter your PIN, we'll automatically detect the payment.
+            Keep this page open while your payment is being processed.
           </p>
         </div>
 
@@ -255,7 +254,7 @@ export default function PaymentForm() {
             onClick={resetForm}
             className="text-sm font-medium text-gray-400 hover:text-red-500 transition-colors"
           >
-            Cancel Transaction
+            Cancel Payment
           </button>
         </div>
       </div>
@@ -267,8 +266,8 @@ export default function PaymentForm() {
     return (
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 text-center">
         <SendingLoader />
-        <h2 className="text-lg sm:text-xl font-bold text-green-600 mt-4 sm:mt-6">Payment Successful!</h2>
-        <p className="text-gray-600 mt-2 text-sm sm:text-base">Redirecting to confirmation page...</p>
+        <h2 className="text-lg sm:text-xl font-bold text-green-600 mt-4 sm:mt-6">Payment Successful</h2>
+        <p className="text-gray-600 mt-2 text-sm sm:text-base">Redirecting to your receipt...</p>
       </div>
     );
   }
@@ -282,7 +281,7 @@ export default function PaymentForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </div>
-        <h2 className="text-lg sm:text-xl font-bold text-red-600 mt-3 sm:mt-4">Payment Failed</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-red-600 mt-3 sm:mt-4">Payment Unsuccessful</h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">{error}</p>
         <Button 
           variant="outline" 
@@ -307,7 +306,7 @@ export default function PaymentForm() {
           suppressHydrationWarning
           id="fullName"
           type="text"
-          placeholder="John Doe"
+          placeholder="John Kamau"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
@@ -317,33 +316,35 @@ export default function PaymentForm() {
       <div className="space-y-2">
 
         <label htmlFor="phone" className="block text-sm font-semibold text-[#27187D]">
-          Phone Number <span className="text-gray-400 font-normal">(Please enter the phone number you will use to make this payment. It must be a Safaricom number.)</span>
+          Phone Number
         </label>
         <input
           suppressHydrationWarning
           id="phone"
           type="tel"
-          placeholder="07XXXXXXXX"
+          placeholder="0712345678"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
         />
+        <p className="text-xs text-gray-500 mt-1">Enter the Safaricom number that will authorize this payment.</p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="purpose" className="block text-sm font-semibold text-[#27187D]">
-          Purpose of Payment <span className="text-gray-400 font-normal">(What you are paying for.)</span>
+          Purpose of Payment
         </label>
         <input
           suppressHydrationWarning
           id="purpose"
           type="text"
-          placeholder="e.g. Website Hosting Subscription"
+          placeholder="Website Hosting Subscription"
           maxLength={255}
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
         />
+        <p className="text-xs text-gray-500 mt-1">Describe what this payment is for.</p>
       </div>
 
       <div className="space-y-2">
@@ -354,7 +355,7 @@ export default function PaymentForm() {
           suppressHydrationWarning
           id="amount"
           type="number"
-          placeholder="500"
+          placeholder="50000"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
@@ -364,14 +365,14 @@ export default function PaymentForm() {
       {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
       <Button type="submit" className="w-full py-3 sm:py-4">
-        Pay via M-Pesa
+        Pay with M-Pesa
       </Button>
 
       <div className="flex flex-col items-center gap-2 pt-3 sm:pt-4">
         <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-          <span>🔒 Secure Payment</span>
+          <span>Secure Payment</span>
           <span className="w-px h-3 bg-gray-300"></span>
-          <span>Powered by Safaricom M-Pesa</span>
+          <span>Powered by M-Pesa</span>
         </div>
       </div>
     </form>

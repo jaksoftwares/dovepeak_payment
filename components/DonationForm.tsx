@@ -56,7 +56,7 @@ export default function DonationForm() {
         setState('success');
       } else if (data.status === 'failed') {
         stopPolling();
-        setError('Donation was declined. Please try again.');
+        setError('The payment could not be completed. Please try again.');
         setState('failed');
       }
     } catch (err) {
@@ -74,7 +74,7 @@ export default function DonationForm() {
       if (pollingRef.current) {
         if (Date.now() - startTime >= PAYMENT_TIMEOUT) {
           stopPolling();
-          setError('Donation request timed out. Please try again.');
+          setError('The payment request expired. Please try again.');
           setState('failed');
         } else {
           timeoutRef.current = setTimeout(checkTimeout, 1000);
@@ -102,22 +102,22 @@ export default function DonationForm() {
     setError('');
     
     if (!fullName.trim()) {
-      setError('Please enter your full name');
+      setError('Enter your full name.');
       return;
     }
 
     if (!isValidPhone(phone)) {
-      setError('Please enter a valid M-Pesa phone number (e.g. 0712345678)');
+      setError('Enter a valid Safaricom phone number.');
       return;
     }
 
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      setError('Please enter a valid amount');
+      setError('Enter a valid amount.');
       return;
     }
 
     setState('sending');
-    setStatusMessage('Sending donation request...');
+    setStatusMessage('Submitting payment request...');
 
     try {
       const response = await fetch('/api/stkpush', {
@@ -138,7 +138,7 @@ export default function DonationForm() {
         setCheckoutRequestId(data.checkoutRequestId);
 
         setState('waiting');
-        setStatusMessage('Waiting for donation confirmation...');
+        setStatusMessage('Awaiting payment confirmation...');
         
         if (data.checkoutRequestId) {
           startPolling(data.checkoutRequestId);
@@ -148,7 +148,7 @@ export default function DonationForm() {
         setState('failed');
       }
     } catch {
-      setError('Failed to connect to the server. Please try again.');
+      setError('Unable to connect. Please try again.');
       setState('failed');
     }
   };
@@ -184,9 +184,9 @@ export default function DonationForm() {
     return (
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 text-center border border-purple-100">
         <WaitingLoader />
-        <h2 className="text-lg sm:text-xl font-bold text-[#472CE3] mt-4 sm:mt-6">Almost There!</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-[#472CE3] mt-4 sm:mt-6">Authorize Payment</h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          We've sent an M-Pesa prompt to <span className="font-semibold text-[#472CE3]">{phone}</span> to complete your donation.
+          An M-Pesa authorization request has been sent to <span className="font-semibold text-[#472CE3]">{phone}</span>
         </p>
 
         {/* Professional Status Steps */}
@@ -198,8 +198,8 @@ export default function DonationForm() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Donation Initiated</p>
-              <p className="text-xs text-gray-500">Connecting to the secure M-Pesa network</p>
+              <p className="text-sm font-semibold text-gray-800">Request Submitted</p>
+              <p className="text-xs text-gray-500">Your payment request has been submitted.</p>
             </div>
           </div>
 
@@ -208,8 +208,8 @@ export default function DonationForm() {
               <div className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Awaiting Authorization</p>
-              <p className="text-xs text-gray-500">Please authorize the prompt on your handset</p>
+              <p className="text-sm font-semibold text-gray-800">Awaiting Approval</p>
+              <p className="text-xs text-gray-500">Approve the request on your phone.</p>
             </div>
           </div>
 
@@ -218,17 +218,16 @@ export default function DonationForm() {
               <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">Confirming Contribution</p>
-              <p className="text-xs text-gray-500">Processing your generous support</p>
+              <p className="text-sm font-semibold text-gray-800">Processing Payment</p>
+              <p className="text-xs text-gray-500">Finalizing your transaction.</p>
             </div>
           </div>
 
         </div>
 
         <div className="mt-8 p-4 bg-purple-50 rounded-2xl border border-purple-100/50 flex items-center gap-3">
-          <div className="text-xl">💝</div>
           <p className="text-xs text-purple-700 text-left leading-relaxed font-medium">
-            Your support means a lot. Once you enter your PIN, the donation will be processed automatically.
+            Keep this page open while your payment is being processed.
           </p>
         </div>
 
@@ -239,7 +238,7 @@ export default function DonationForm() {
             onClick={resetForm}
             className="text-sm font-medium text-gray-400 hover:text-purple-600 transition-colors"
           >
-            Cancel Donation
+            Cancel Payment
           </button>
         </div>
       </div>
@@ -250,8 +249,8 @@ export default function DonationForm() {
     return (
       <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-xl p-6 sm:p-8 text-center border border-green-100">
         <SendingLoader color="#0F9D58" />
-        <h2 className="text-lg sm:text-xl font-bold text-green-600 mt-4 sm:mt-6">Donation Successful!</h2>
-        <p className="text-gray-600 mt-2 text-sm sm:text-base">Your generous support is greatly appreciated. Redirecting...</p>
+        <h2 className="text-lg sm:text-xl font-bold text-green-600 mt-4 sm:mt-6">Payment Successful</h2>
+        <p className="text-gray-600 mt-2 text-sm sm:text-base">Redirecting to your receipt...</p>
       </div>
     );
   }
@@ -264,7 +263,7 @@ export default function DonationForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </div>
-        <h2 className="text-lg sm:text-xl font-bold text-red-600 mt-3 sm:mt-4">Donation Failed</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-red-600 mt-3 sm:mt-4">Payment Unsuccessful</h2>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">{error}</p>
         <Button 
           variant="outline" 
@@ -287,7 +286,7 @@ export default function DonationForm() {
         <input
           id="fullName"
           type="text"
-          placeholder="John Doe"
+          placeholder="John Kamau"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
@@ -297,17 +296,17 @@ export default function DonationForm() {
       <div className="space-y-2">
 
         <label htmlFor="phone" className="block text-sm font-semibold text-[#472CE3]">
-          Your Phone Number (M-Pesa)
+          Phone Number
         </label>
         <input
           id="phone"
           type="tel"
-          placeholder="07XXXXXXXX"
+          placeholder="0712345678"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
         />
-        <p className="text-[10px] text-gray-400 italic">Enter the number that will receive the M-Pesa prompt</p>
+        <p className="text-xs text-gray-500 mt-1">Enter the Safaricom number that will authorize this payment.</p>
       </div>
 
       <div className="space-y-2">
@@ -319,7 +318,7 @@ export default function DonationForm() {
           <input
             id="amount"
             type="number"
-            placeholder="500"
+            placeholder="500.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="w-full pl-14 pr-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
@@ -330,14 +329,14 @@ export default function DonationForm() {
       {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
       <Button type="submit" className="w-full py-3 sm:py-4 bg-[#472CE3] hover:bg-[#3216B0] shadow-lg shadow-purple-200">
-        Donate via M-Pesa
+        Pay with M-Pesa
       </Button>
 
       <div className="flex flex-col items-center gap-2 pt-3 sm:pt-4">
         <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-          <span>🔒 Secure Donation</span>
+          <span>Secure Payment</span>
           <span className="w-px h-3 bg-gray-300"></span>
-          <span>Verified M-Pesa Portal</span>
+          <span>Powered by M-Pesa</span>
         </div>
         <p className="text-[10px] text-gray-400">Your contribution helps us grow.</p>
       </div>
