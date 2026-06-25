@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
       amount: payment.amount,
       reference: payment.reference,
       mpesa_receipt: payment.mpesa_receipt,
+      full_name: payment.full_name,
       updated_at: payment.updated_at,
     });
 

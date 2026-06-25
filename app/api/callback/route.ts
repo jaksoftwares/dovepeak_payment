@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendPaymentReceipt } from '@/lib/postmark';
+import { logCallback } from '@/lib/logger';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'dovepeakdigital@gmail.com';
 
@@ -27,27 +28,48 @@ export async function POST(req: NextRequest) {
 
     if (resultCodeCode === 0) {
       status = 'completed';
-      const items = result.CallbackMetadata.Item;
+      const items = result.CallbackMetadata?.Item || [];
       const receiptItem = items.find((item: { Name: string; Value: any }) => item.Name === 'MpesaReceiptNumber');
       mpesaReceipt = receiptItem ? receiptItem.Value : '';
 
-      // Extract name from ResultDesc if possible (e.g. "Confirmed. KES 1 received from JOHN DOE 254712345678...")
-      const nameMatch = resultDesc.match(/received from (.*?) \d+/);
-      if (nameMatch && nameMatch[1]) {
-        extractedName = nameMatch[1].trim();
+      // Try to find a Name item in the metadata (some APIs or aggregators include this)
+      const nameItem = items.find((item: { Name: string; Value: any }) => 
+        item.Name.toLowerCase().includes('name') && item.Value
+      );
+      if (nameItem) {
+        extractedName = nameItem.Value.toString().trim();
+      }
+
+      // If not found in items, extract name from ResultDesc if possible
+      // (e.g. "Confirmed. KES 1 received from JOHN DOE 254712345678...")
+      if (!extractedName && resultDesc) {
+        // Try multiple formats just in case
+        const nameMatch = resultDesc.match(/received from (.*?) \d+/i) || resultDesc.match(/from (.*?) on/i);
+        if (nameMatch && nameMatch[1]) {
+          extractedName = nameMatch[1].trim();
+        }
       }
     }
+
+    // Build the update payload dynamically to avoid overwriting existing full_name with null
+    const updatePayload: any = { 
+      status, 
+      mpesa_receipt: mpesaReceipt,
+      result_desc: resultDesc,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (extractedName) {
+      updatePayload.full_name = extractedName;
+    }
+
+    console.log('Update Payload for Supabase:', updatePayload);
+    logCallback({ stage: 'pre_update', checkoutRequestID, extractedName, updatePayload });
 
     // Update Supabase with all details in one go
     const { error: dbError } = await supabase
       .from('payments')
-      .update({ 
-        status, 
-        mpesa_receipt: mpesaReceipt,
-        result_desc: resultDesc,
-        full_name: extractedName,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('checkout_request_id', checkoutRequestID);
 
     if (dbError) {

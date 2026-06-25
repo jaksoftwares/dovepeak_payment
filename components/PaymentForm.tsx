@@ -14,7 +14,7 @@ const POLLING_INTERVAL = 3000; // 3 seconds
 export default function PaymentForm() {
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
-
+  const [fullName, setFullName] = useState('');
 
   const [state, setState] = useState<PaymentState>('idle');
   const [error, setError] = useState('');
@@ -24,7 +24,6 @@ export default function PaymentForm() {
   const router = useRouter();
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -107,9 +106,12 @@ export default function PaymentForm() {
     e.preventDefault();
     setError('');
     
+    if (!fullName.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+
     if (!isValidPhone(phone)) {
-
-
       setError('Please enter a valid M-Pesa phone number (e.g. 0712345678)');
       return;
     }
@@ -129,9 +131,8 @@ export default function PaymentForm() {
         body: JSON.stringify({
           phone: formatPhone(phone),
           amount: Number(amount),
+          fullName: fullName.trim(),
         }),
-
-
       });
 
       const data = await response.json();
@@ -289,6 +290,20 @@ export default function PaymentForm() {
   // Idle State - Payment Form
   return (
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 w-full max-w-md">
+
+      <div className="space-y-2">
+        <label htmlFor="fullName" className="block text-sm font-semibold text-[#27187D]">
+          Full Name
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          placeholder="John Doe"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
+        />
+      </div>
 
       <div className="space-y-2">
 

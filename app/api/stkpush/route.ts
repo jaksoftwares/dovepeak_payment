@@ -5,13 +5,17 @@ import { isValidPhone } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, amount, type } = await req.json();
+    const { phone, amount, type, fullName } = await req.json();
 
 
 
     // 1. Validate
     if (!phone || !amount) {
       return NextResponse.json({ message: 'Phone and amount are required' }, { status: 400 });
+    }
+
+    if (!fullName) {
+      return NextResponse.json({ message: 'Full name is required' }, { status: 400 });
     }
 
 
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
           mpesa_receipt: null,
           checkout_request_id: stkResponse.CheckoutRequestID,
           type: type || 'payment',
+          full_name: fullName,
         });
 
 
