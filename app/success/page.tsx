@@ -265,7 +265,6 @@ function SuccessPageContent() {
           </button>
         </div>
 
-        </div>
       </div>
       
       <div className="no-print w-full">
