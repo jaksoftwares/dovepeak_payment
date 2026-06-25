@@ -12,6 +12,7 @@ interface PaymentDetails {
   updated_at?: string;
   status?: string;
   full_name?: string;
+  purpose_of_payment?: string;
 }
 
 function SuccessPageContent() {
@@ -49,7 +50,8 @@ function SuccessPageContent() {
             mpesa_receipt: data.mpesa_receipt,
             updated_at: data.updated_at,
             status: data.status,
-            full_name: data.full_name
+            full_name: data.full_name,
+            purpose_of_payment: data.purpose_of_payment
           });
 
         }
@@ -97,7 +99,8 @@ function SuccessPageContent() {
         receiptNumber: paymentDetails?.mpesa_receipt || 'Processing...',
         reference: reference,
         date: paymentDetails?.updated_at ? formatDate(paymentDetails.updated_at) : formatDate(),
-        status: 'COMPLETED'
+        status: 'COMPLETED',
+        purposeOfPayment: paymentDetails?.purpose_of_payment || null,
       });
     });
   };
@@ -109,6 +112,7 @@ function SuccessPageContent() {
   const displayReceipt = paymentDetails?.mpesa_receipt || 'Processing...';
   const displayPhone = paymentDetails?.phone || 'N/A';
   const displayDate = paymentDetails?.updated_at ? formatDate(paymentDetails.updated_at) : formatDate();
+  const displayPurpose = paymentDetails?.purpose_of_payment;
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -206,6 +210,13 @@ function SuccessPageContent() {
               <span className="text-gray-500 text-sm">Account</span>
               <span className="text-[#27187D] font-semibold text-sm">Joseph Amuyunzu Kirika</span>
             </div>
+
+            {displayPurpose && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-500 text-sm">Purpose of Payment</span>
+                <span className="text-[#27187D] font-semibold text-sm text-right max-w-[60%]">{displayPurpose}</span>
+              </div>
+            )}
 
             <div className="flex justify-between items-center py-2 border-b border-gray-200">
               <span className="text-gray-500 text-sm">M-Pesa Receipt</span>

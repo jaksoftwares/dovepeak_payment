@@ -9,6 +9,7 @@ interface ReceiptData {
   reference: string;
   date: string;
   status?: string;
+  purposeOfPayment?: string | null;
 }
 
 const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -137,14 +138,38 @@ export const downloadReceiptPDF = async (data: ReceiptData) => {
   currentY += 3;
   doc.line(14, currentY, 196, currentY);
   
-  // Table Row
-  currentY += 7;
+  // Table Rows
+  currentY += 8;
+  const formattedAmount = `KES ${Number(data.amount).toFixed(2)}`;
+  
+  if (data.purposeOfPayment && data.purposeOfPayment.trim() !== '') {
+    doc.setFontSize(8);
+    doc.setTextColor(140, 140, 140);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Purpose of Payment', 14, currentY);
+    
+    currentY += 5;
+    doc.setTextColor(40, 40, 40);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    
+    // Split long purposes to avoid overflowing into the amount column
+    const splitPurpose = doc.splitTextToSize(data.purposeOfPayment, 120);
+    doc.text(splitPurpose, 14, currentY);
+    
+    currentY += (splitPurpose.length * 5) + 4;
+  }
+  
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 140);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Payment Method', 14, currentY);
+  
+  currentY += 5;
   doc.setTextColor(40, 40, 40);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(`${data.type} - Safaricom M-Pesa`, 14, currentY);
-  
-  const formattedAmount = `KES ${Number(data.amount).toFixed(2)}`;
+  doc.text('Safaricom M-Pesa', 14, currentY);
   doc.text(formattedAmount, 196, currentY, { align: 'right' });
   
   // Table Footer / Summary
@@ -158,41 +183,114 @@ export const downloadReceiptPDF = async (data: ReceiptData) => {
   doc.text('Total', 120, currentY);
   doc.text(formattedAmount, 196, currentY, { align: 'right' });
   
-  // --- Digital Certification Section ---
+  // --- Footer / Signature Section ---
   const pageHeight = doc.internal.pageSize.height;
-  const certY = pageHeight - 65;
+  const footerY = pageHeight - 55;
   
   doc.setDrawColor(230, 230, 230);
   doc.setLineWidth(0.5);
-  doc.line(14, certY, 196, certY);
+  doc.line(14, footerY, 196, footerY);
+
+  // Corporate Stamp (Subtle / Watermark style)
+  const stampCenterY = footerY + 20;
+  const stampCenterX = 105;
   
-  // Digital Stamp Graphic
-  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setDrawColor(220, 225, 240); // Faint blue
   doc.setLineWidth(0.5);
-  doc.roundedRect(14, certY + 8, 38, 14, 1.5, 1.5);
-  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.text('SECURE', 33, certY + 13.5, { align: 'center' });
-  doc.text('ELECTRONIC RECORD', 33, certY + 17.5, { align: 'center' });
+  doc.circle(stampCenterX, stampCenterY, 18, 'S'); // Outer circle
+  doc.circle(stampCenterX, stampCenterY, 11, 'S'); // Inner circle
   
-  // Certification Details
+  doc.setTextColor(200, 210, 235);
+  
+  // Draw circular text
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.5);
+  const companyName = ' DOVEPEAK DIGITAL SOLUTIONS • DOVEPEAK DIGITAL SOLUTIONS •';
+  const textRadius = 14.5;
+  
+  // Calculate raw character widths with visual kerning adjustments
+  // Narrow characters like 'I' can look misaligned or cramped on a curve due to their
+  // small bounding box. We artificially boost their width to give them optical breathing room.
+  let rawTotalWidth = 0;
+  const rawCharWidths: number[] = [];
+  for (let i = 0; i < companyName.length; i++) {
+    const char = companyName[i];
+    let width = doc.getTextWidth(char);
+    
+    // Optical kerning adjustments for narrow letters
+    if (char === 'I') width *= 1.8;
+    if (char === 'L') width *= 1.3;
+    if (char === ' ') width *= 1.5;
+    if (char === 'T') width *= 1.2;
+    
+    rawCharWidths.push(width);
+    rawTotalWidth += width;
+  }
+  
+  // To prevent letters from being squished, we distribute the remaining 
+  // circumference space EQUALLY among all characters (tracking)
+  const circumference = 2 * Math.PI * textRadius;
+  const remainingSpace = Math.max(0, circumference - rawTotalWidth);
+  const trackingPerChar = remainingSpace / companyName.length;
+  
+  let currentAngle = -(Math.PI / 2); // Start at top (-90 degrees)
+  
+  for (let i = 0; i < companyName.length; i++) {
+    const char = companyName[i];
+    const charWidth = rawCharWidths[i] + trackingPerChar;
+    
+    // Calculate the angular span of this character (its adjusted width + equal padding)
+    const charAngleSpan = (charWidth / circumference) * (2 * Math.PI);
+    
+    // Place the character at the center of its angular span
+    const angleRad = currentAngle + (charAngleSpan / 2);
+    
+    const x = stampCenterX + textRadius * Math.cos(angleRad);
+    const y = stampCenterY + textRadius * Math.sin(angleRad);
+    
+    // Text rotation: bottom of letters towards center
+    const angleDeg = -(angleRad * (180 / Math.PI) + 90);
+    
+    doc.text(char, x, y, { align: 'center', angle: angleDeg });
+    
+    // Advance the angle for the next character
+    currentAngle += charAngleSpan;
+  }
+
+  // Inner text
+  doc.setFontSize(8);
+  doc.text('OFFICIAL', stampCenterX, stampCenterY - 1, { align: 'center' });
+  doc.setFontSize(5);
+  doc.text('AUTHORIZED', stampCenterX, stampCenterY + 4, { align: 'center' });
+
+  // Authorized Signature Block (Right aligned)
+  const sigX = 145;
+  
+  // Draw a cursive-like signature using Times-Italic
+  doc.setTextColor(25, 50, 110); // Dark blue pen color
+  doc.setFont('times', 'italic');
+  doc.setFontSize(24);
+  doc.text('J. Kirika', sigX + 20, footerY + 18, { align: 'center' });
+  
+  // Signature line
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.3);
+  doc.line(sigX, footerY + 22, sigX + 40, footerY + 22);
+  
+  // Signature Labels
   doc.setTextColor(80, 80, 80);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('Digital Certification', 60, certY + 11.5);
-  
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-  doc.text(`Authorized Electronic Receipt - Dovepeak Digital Solutions`, 60, certY + 16.5);
-  doc.text(`Timestamp: ${timestamp}`, 60, certY + 21);
-  doc.text(`Verification Ref: ${data.receiptNumber || data.reference}`, 60, certY + 25.5);
-  
-  // Footer
-  doc.setTextColor(150, 150, 150);
+  doc.text('Authorized Signature', sigX + 20, footerY + 28, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.text('This document serves as an official financial record. For support inquiries, contact info@dovepeakdigital.com', 105, pageHeight - 12, { align: 'center' });
+  doc.text('Dovepeak Digital Solutions', sigX + 20, footerY + 33, { align: 'center' });
+  
+  // Footer Note
+  doc.setTextColor(150, 150, 150);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text('Thank you for your business. For support, contact info@dovepeakdigital.com', 105, pageHeight - 12, { align: 'center' });
   
   // Save PDF
   const filename = `Dovepeak_${data.type}_Receipt_${data.receiptNumber || data.reference}.pdf`;

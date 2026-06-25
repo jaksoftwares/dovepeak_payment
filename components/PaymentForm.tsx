@@ -15,6 +15,7 @@ export default function PaymentForm() {
   const [phone, setPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [fullName, setFullName] = useState('');
+  const [purpose, setPurpose] = useState('');
 
   const [state, setState] = useState<PaymentState>('idle');
   const [error, setError] = useState('');
@@ -121,6 +122,13 @@ export default function PaymentForm() {
       return;
     }
 
+    // Purpose is optional, but if provided, validate length
+    let sanitizedPurpose = purpose.trim();
+    if (sanitizedPurpose.length > 255) {
+      setError('Purpose of payment is too long (maximum 255 characters)');
+      return;
+    }
+
     setState('sending');
     setStatusMessage('Sending payment request...');
 
@@ -132,6 +140,7 @@ export default function PaymentForm() {
           phone: formatPhone(phone),
           amount: Number(amount),
           fullName: fullName.trim(),
+          purposeOfPayment: sanitizedPurpose || undefined,
         }),
       });
 
@@ -163,14 +172,13 @@ export default function PaymentForm() {
     stopPolling();
     setState('idle');
     setPhone('');
-
-
     setAmount('');
+    setFullName('');
+    setPurpose('');
     setReference('');
     setCheckoutRequestId('');
     setError('');
     setStatusMessage('');
-
   };
 
   // Loading/Sending State
@@ -289,13 +297,14 @@ export default function PaymentForm() {
 
   // Idle State - Payment Form
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 w-full max-w-md">
+    <form suppressHydrationWarning onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 w-full max-w-md">
 
       <div className="space-y-2">
         <label htmlFor="fullName" className="block text-sm font-semibold text-[#27187D]">
           Full Name
         </label>
         <input
+          suppressHydrationWarning
           id="fullName"
           type="text"
           placeholder="John Doe"
@@ -308,9 +317,10 @@ export default function PaymentForm() {
       <div className="space-y-2">
 
         <label htmlFor="phone" className="block text-sm font-semibold text-[#27187D]">
-          Phone Number
+          Phone Number <span className="text-gray-400 font-normal">(Please enter the phone number you will use to make this payment. It must be a Safaricom number.)</span>
         </label>
         <input
+          suppressHydrationWarning
           id="phone"
           type="tel"
           placeholder="07XXXXXXXX"
@@ -321,10 +331,27 @@ export default function PaymentForm() {
       </div>
 
       <div className="space-y-2">
+        <label htmlFor="purpose" className="block text-sm font-semibold text-[#27187D]">
+          Purpose of Payment <span className="text-gray-400 font-normal">(What you are paying for.)</span>
+        </label>
+        <input
+          suppressHydrationWarning
+          id="purpose"
+          type="text"
+          placeholder="e.g. Website Hosting Subscription"
+          maxLength={255}
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          className="w-full px-4 py-3 text-base border-2 border-gray-100 rounded-xl focus:border-[#472CE3] focus:outline-none transition-colors"
+        />
+      </div>
+
+      <div className="space-y-2">
         <label htmlFor="amount" className="block text-sm font-semibold text-[#27187D]">
           Amount (KES)
         </label>
         <input
+          suppressHydrationWarning
           id="amount"
           type="number"
           placeholder="500"

@@ -5,9 +5,7 @@ import { isValidPhone } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, amount, type, fullName } = await req.json();
-
-
+    const { phone, amount, type, fullName, purposeOfPayment } = await req.json();
 
     // 1. Validate
     if (!phone || !amount) {
@@ -18,7 +16,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Full name is required' }, { status: 400 });
     }
 
-
+    let sanitizedPurpose = null;
+    if (purposeOfPayment) {
+      sanitizedPurpose = String(purposeOfPayment).trim();
+      if (sanitizedPurpose.length > 255) {
+        return NextResponse.json({ message: 'Purpose of payment exceeds maximum length of 255 characters' }, { status: 400 });
+      }
+      if (sanitizedPurpose.length === 0) {
+        sanitizedPurpose = null;
+      }
+    }
 
     if (!isValidPhone(phone)) {
       console.log('Payment Request - Invalid phone:', { phone, amount, type });
@@ -62,6 +69,7 @@ export async function POST(req: NextRequest) {
           checkout_request_id: stkResponse.CheckoutRequestID,
           type: type || 'payment',
           full_name: fullName,
+          purpose_of_payment: sanitizedPurpose,
         });
 
 

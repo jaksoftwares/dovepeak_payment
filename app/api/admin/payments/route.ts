@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(req: NextRequest) {
   try {
-    // In production, you would add authentication here
-    // For now, we'll keep it simple
+    const supabase = await createClient();
 
-    if (!supabase) {
-      return NextResponse.json({ message: 'Database not configured' }, { status: 500 });
+    // Verify session
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     // Fetch all payments ordered by most recent

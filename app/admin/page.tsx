@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/utils/supabase/client';
 
 interface Payment {
   id: string;
@@ -12,39 +12,19 @@ interface Payment {
   status: string;
   mpesa_receipt: string | null;
   full_name: string | null;
+  purpose_of_payment: string | null;
   created_at: string;
-
   updated_at: string;
 }
 
 export default function AdminPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed'>('all');
 
-  const supabase = React.useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), []);
-
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        router.push('/admin/login');
-        setIsAuthenticated(false);
-      } else {
-        setIsAuthenticated(true);
-      }
-    };
-
-    checkAuth();
-  }, [supabase, router]);
+  const supabase = createClient();
 
   useEffect(() => {
     fetchPayments();
@@ -56,20 +36,13 @@ export default function AdminPage() {
 
   const fetchPayments = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        router.push('/admin/login');
-        return;
-      }
-      
-      const response = await fetch('/api/admin/payments', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
+      // The API route `/api/admin/payments` is now protected by server-side checks.
+      // We don't need to manually pass a Bearer token here because the browser automatically
+      // sends the Supabase auth cookies, which are verified by `utils/supabase/server` in the route.
+      const response = await fetch('/api/admin/payments');
       
       if (response.status === 401) {
+        // If the cookie expired, redirect to login
         router.push('/admin/login');
         return;
       }
@@ -131,25 +104,6 @@ export default function AdminPage() {
   const totalAmount = filteredPayments
     .filter(p => p.status === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
-
-  // Show loading while checking auth
-  if (isAuthenticated === null) {
-    return (
-      <main className="min-h-screen bg-gray-50 p-4 sm:p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48 mb-4 sm:mb-6"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
-              <div className="h-24 bg-gray-200 rounded-xl"></div>
-              <div className="h-24 bg-gray-200 rounded-xl"></div>
-              <div className="h-24 bg-gray-200 rounded-xl"></div>
-            </div>
-            <div className="h-96 bg-gray-200 rounded-xl"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   if (loading) {
     return (
@@ -286,6 +240,7 @@ export default function AdminPage() {
 
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Purpose</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">M-Pesa Receipt</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
@@ -315,6 +270,11 @@ export default function AdminPage() {
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <span className="font-bold text-[#27187D] text-xs sm:text-sm">KES {payment.amount.toLocaleString()}</span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <span className="text-xs sm:text-sm text-gray-600 truncate max-w-[150px] inline-block" title={payment.purpose_of_payment || 'N/A'}>
+                          {payment.purpose_of_payment || 'N/A'}
+                        </span>
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <span className="font-mono text-xs sm:text-sm text-gray-600">
