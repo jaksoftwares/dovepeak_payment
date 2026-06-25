@@ -5,7 +5,7 @@ This document evaluates alternative approaches to scheduling the Supabase health
 ## Option A: GitHub Actions Scheduler (Current Implementation)
 Uses a `.yml` workflow with a cron trigger to `fetch` the health endpoint.
 
-*   **Cost:** Free for up to 2,000 minutes/month on private repos (Unlimited on public). Running every 15 minutes consumes ~2,800 minutes/month, which may exceed the free tier if the repo is private.
+*   **Cost:** Free for up to 2,000 minutes/month on private repos (Unlimited on public). Running every 3 days consumes < 1 minute/month, which is well within the free tier.
 *   **Reliability:** High, but GitHub automatically disables cron jobs if the repository has no commits for 60 days.
 *   **Ease of Maintenance:** Excellent. Configuration lives directly in the repository alongside the code.
 *   **Scalability:** Perfect for single-endpoint checks.
@@ -19,7 +19,7 @@ Using a dedicated uptime monitoring SaaS like [UptimeRobot](https://uptimerobot.
 *   **Ease of Maintenance:** Requires managing an external dashboard and account.
 *   **Scalability:** Excellent. Provides dashboards, SMS alerts, and email notifications out-of-the-box.
 *   **Production Readiness:** Very High. **Recommended if GitHub Actions minutes become a constraint or if SMS/Email alerting is required.**
-*   **How to setup:** Create a free account, add an "HTTP(s)" monitor pointing to `https://payment.dovepeakdigital.com/api/health`, and set the interval to 15 minutes.
+*   **How to setup:** Create a free account, add an "HTTP(s)" monitor pointing to `https://payment.dovepeakdigital.com/api/health`, and set the interval to 3 days (or as desired).
 
 ## Option C: Cron Job on VPS
 Using standard Linux `cron` on a Virtual Private Server (e.g., DigitalOcean, AWS EC2, or an existing company server).
@@ -29,7 +29,7 @@ Using standard Linux `cron` on a Virtual Private Server (e.g., DigitalOcean, AWS
 *   **Ease of Maintenance:** Low. Requires SSH access, manual log rotation, and OS patching. Configuration is decoupled from the codebase.
 *   **Scalability:** Moderate. You must write custom bash scripts to parse JSON and send alerts (e.g., Slack webhooks) on failure.
 *   **Production Readiness:** Moderate. Can be fragile if the server runs out of disk space or memory.
-*   **Example Setup:** `*/15 * * * * curl -sSf https://payment.dovepeakdigital.com/api/health > /var/log/health.log 2>&1`
+*   **Example Setup:** `0 0 */3 * * curl -sSf https://payment.dovepeakdigital.com/api/health > /var/log/health.log 2>&1`
 
 ## Option D: Cloudflare Scheduled Workers
 Using a Cloudflare Worker triggered by a Cron Trigger to hit the endpoint.
