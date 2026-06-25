@@ -90,7 +90,8 @@ export async function POST(req: NextRequest) {
         phone: updatedPayment.phone,
         reference: updatedPayment.reference,
         mpesaReceipt: mpesaReceipt,
-        fullName: updatedPayment.full_name || 'Valued Customer'
+        fullName: updatedPayment.full_name || 'Valued Customer',
+        purposeOfPayment: updatedPayment.purpose_of_payment
       });
     }
 

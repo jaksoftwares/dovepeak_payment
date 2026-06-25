@@ -13,11 +13,12 @@ interface ReceiptData {
   mpesaReceipt: string;
   fullName: string;
   customerEmail?: string;
+  purposeOfPayment?: string;
 }
 
 
 export async function sendPaymentReceipt(data: ReceiptData) {
-  const { amount, phone, reference, mpesaReceipt, fullName, customerEmail } = data;
+  const { amount, phone, reference, mpesaReceipt, fullName, customerEmail, purposeOfPayment } = data;
 
 
   const formattedPhone = phone.replace(/\D/g, '');
@@ -90,6 +91,12 @@ export async function sendPaymentReceipt(data: ReceiptData) {
                 <td class="detail-label">Reference</td>
                 <td class="detail-value">${reference}</td>
               </tr>
+              ${purposeOfPayment ? `
+              <tr class="detail-row">
+                <td class="detail-label">Purpose</td>
+                <td class="detail-value">${purposeOfPayment}</td>
+              </tr>
+              ` : ''}
               <tr class="detail-row">
                 <td class="detail-label">Payment Method</td>
                 <td class="detail-value">M-Pesa</td>
@@ -135,7 +142,7 @@ export async function sendPaymentReceipt(data: ReceiptData) {
       To: recipients.join(', '),
       Subject: `Receipt for Payment from ${fullName}: ${mpesaReceipt} - Dovepeak Digital`,
       HtmlBody: htmlContent,
-      TextBody: `Payment Receipt\n\nName: ${fullName}\nAmount: KES ${amount}\nReceipt: ${mpesaReceipt}\nReference: ${reference}\nPhone: ${displayPhone}\nDate: ${formattedDate}\n\nThank you for choosing Dovepeak Digital.`,
+      TextBody: `Payment Receipt\n\nName: ${fullName}\nAmount: KES ${amount}\nReceipt: ${mpesaReceipt}\nReference: ${reference}\n${purposeOfPayment ? `Purpose: ${purposeOfPayment}\n` : ''}Phone: ${displayPhone}\nDate: ${formattedDate}\n\nThank you for choosing Dovepeak Digital.`,
 
       MessageStream: 'outbound'
     });
