@@ -101,6 +101,22 @@ export default function AdminPage() {
     return payment.status === filter;
   });
 
+  const handleDownloadReceipt = (payment: Payment) => {
+    import('@/lib/receiptPdf').then(({ downloadReceiptPDF }) => {
+      downloadReceiptPDF({
+        type: 'Payment',
+        amount: payment.amount.toString(),
+        fullName: payment.full_name || 'N/A',
+        phone: payment.phone || 'N/A',
+        receiptNumber: payment.mpesa_receipt || 'Processing...',
+        reference: payment.reference,
+        date: formatDate(payment.updated_at || payment.created_at),
+        status: payment.status.toUpperCase(),
+        purposeOfPayment: payment.purpose_of_payment || null,
+      });
+    });
+  };
+
   const totalAmount = filteredPayments
     .filter(p => p.status === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
@@ -243,6 +259,7 @@ export default function AdminPage() {
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Purpose</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">M-Pesa Receipt</th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -285,6 +302,20 @@ export default function AdminPage() {
                         <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(payment.status)}`}>
                           {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                         </span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        {payment.status === 'completed' && (
+                          <button
+                            onClick={() => handleDownloadReceipt(payment)}
+                            className="text-[#27187D] hover:text-[#472CE3] flex items-center gap-1 text-xs sm:text-sm transition-colors"
+                            title="Download Receipt"
+                          >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            <span className="hidden sm:inline">Download</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
